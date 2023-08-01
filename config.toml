@@ -6,6 +6,7 @@ build-mindetach-module = true
 # see https://github.com/j-hc/revanced-magisk-module/blob/main/CONFIG.md for more detailed explanations
 
 [YouTube]
+enabled = false
 apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/youtube/"
 
 [YouTube-Extended]
@@ -17,8 +18,9 @@ rv-brand = "ReVanced Extended"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/youtube/"
 
 [Music]
+enabled = false
 apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/youtube-music/"
-apkmirror-arch = "arm64-v8a"                                                     # both arm64-v8a and arm-v7a
+apkmirror-arch = "arm64-v8a"
 
 [Music-Extended]
 app-name = "Music"
