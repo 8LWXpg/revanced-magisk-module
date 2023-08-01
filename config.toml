@@ -35,9 +35,6 @@ apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit/"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/facebook-2/messenger/"
 apkmirror-arch = "arm64-v8a"
 
-[Spotify]
-uptodown-dlurl = "https://spotify.en.uptodown.com/android"
-
 [Pixiv]
 apkmonk-dlurl = "https://www.apkmirror.com/apk/pixiv-inc/pixiv/"
 
