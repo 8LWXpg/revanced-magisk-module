@@ -1,4 +1,6 @@
+Facebook: 425.0.0.22.49  
 Pixiv: 6.85.0  
+Google-Recorder: 4.2.20230504.529611040  
 
 Install [Vanced Microg](https://github.com/TeamVanced/VancedMicroG/releases) for non-root YouTube or YT Music  
 
