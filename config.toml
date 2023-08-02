@@ -6,9 +6,9 @@ build-mindetach-module = true
 # see https://github.com/j-hc/revanced-magisk-module/blob/main/CONFIG.md for more detailed explanations
 
 [Pixiv]
-apkmonk-dlurl = "https://www.apkmirror.com/apk/pixiv-inc/pixiv/"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/pixiv-inc/pixiv/"
 
 [GoogleRecorder]
-apkmonk-dlurl = "https://www.apkmirror.com/apk/google-inc/google-recorder/"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/google-recorder/"
 apkmirror-arch = "arm64-v8a"
 apkmirror-dpi = "160-640dpi"
