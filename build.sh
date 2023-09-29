@@ -22,11 +22,6 @@ if [ "$ENABLE_MAGISK_UPDATE" = true ] && [ -z "${GITHUB_REPOSITORY:-}" ]; then
 	pr "You are building locally. Magisk updates will not be enabled."
 	ENABLE_MAGISK_UPDATE=false
 fi
-BUILD_MINDETACH_MODULE=$(toml_get "$main_config_t" build-mindetach-module) || BUILD_MINDETACH_MODULE=false
-if [ "$BUILD_MINDETACH_MODULE" = true ] && [ ! -f "mindetach-magisk/mindetach/detach.txt" ]; then
-	pr "mindetach module was not found."
-	BUILD_MINDETACH_MODULE=false
-fi
 if ! PARALLEL_JOBS=$(toml_get "$main_config_t" parallel-jobs); then
 	if [ "$OS" = Android ]; then PARALLEL_JOBS=1; else PARALLEL_JOBS=$(nproc); fi
 fi
@@ -42,12 +37,11 @@ DEF_RV_BRAND=$(toml_get "$main_config_t" rv-brand) || DEF_RV_BRAND="ReVanced"
 mkdir -p $TEMP_DIR $BUILD_DIR
 
 if ((COMPRESSION_LEVEL > 9)) || ((COMPRESSION_LEVEL < 0)); then abort "compression-level must be within 0-9"; fi
-if [ "$BUILD_MINDETACH_MODULE" = true ]; then : >$PKGS_LIST; fi
 if [ "$LOGGING_F" = true ]; then mkdir -p logs; fi
 
 #check_deps
 jq --version >/dev/null || abort "\`jq\` is not installed. install it with 'apt install jq' or equivalent"
-java --version >/dev/null || abort "\`openjdk 17\` is not installed. install it with 'apt install openjdk-17-jre-headless' or equivalent"
+java --version >/dev/null || abort "\`openjdk 17\` is not installed. install it with 'apt install openjdk-17-jre' or equivalent"
 zip --version >/dev/null || abort "\`zip\` is not installed. install it with 'apt install zip' or equivalent"
 # --
 get_prebuilts
@@ -76,12 +70,14 @@ build_rv_w() {
 	fi
 }
 
+declare -A cliriplib
 idx=0
 for table_name in $(toml_get_table_names); do
 	if [ -z "$table_name" ]; then continue; fi
 	t=$(toml_get_table "$table_name")
 	enabled=$(toml_get "$t" enabled) && vtf "$enabled" "enabled" || enabled=true
 	if [ "$enabled" = false ]; then continue; fi
+	if ((idx >= PARALLEL_JOBS)); then wait -n; fi
 
 	declare -A app_args
 	patches_src=$(toml_get "$t" patches-source) || patches_src=$DEF_PATCHES_SRC
@@ -90,6 +86,7 @@ for table_name in $(toml_get_table_names); do
 	integrations_ver=$(toml_get "$t" integrations-version) || integrations_ver=$DEF_INTEGRATIONS_VER
 	cli_src=$(toml_get "$t" cli-source) || cli_src=$DEF_CLI_SRC
 	cli_ver=$(toml_get "$t" cli-version) || cli_ver=$DEF_CLI_VER
+
 	if ! set_prebuilts "$integrations_src" "$patches_src" "$cli_src" "$integrations_ver" "$patches_ver" "$cli_ver"; then
 		if ! RVP="$(get_rv_prebuilts "$integrations_src" "$patches_src" "$integrations_ver" "$patches_ver" "$cli_src" "$cli_ver")"; then
 			abort "could not download rv prebuilts"
@@ -100,7 +97,15 @@ for table_name in $(toml_get_table_names); do
 		app_args[ptjar]=$rv_patches_jar
 		app_args[ptjs]=$rv_patches_json
 	fi
-	if [[ $(java -jar "${app_args[cli]}" patch 2>&1) == *rip-lib* ]]; then app_args[riplib]=true; else app_args[riplib]=false; fi
+	if [[ -v cliriplib[${app_args[cli]}] ]]; then app_args[riplib]=${cliriplib[${app_args[cli]}]}; else
+		if [[ $(java -jar "${app_args[cli]}" patch 2>&1) == *rip-lib* ]]; then
+			cliriplib[${app_args[cli]}]=true
+			app_args[riplib]=true
+		else
+			cliriplib[${app_args[cli]}]=false
+			app_args[riplib]=false
+		fi
+	fi
 	app_args[rv_brand]=$(toml_get "$t" rv-brand) || app_args[rv_brand]="$DEF_RV_BRAND"
 
 	app_args[excluded_patches]=$(toml_get "$t" excluded-patches) || app_args[excluded_patches]=""
@@ -141,15 +146,16 @@ for table_name in $(toml_get_table_names); do
 		app_args[table]="$table_name (arm64-v8a)"
 		app_args[module_prop_name]="${app_args[module_prop_name]}-arm64"
 		app_args[arch]="arm64-v8a"
-		if ((idx >= PARALLEL_JOBS)); then wait -n; else idx=$((idx + 1)); fi
+		idx=$((idx + 1))
 		build_rv_w
 		app_args[table]="$table_name (arm-v7a)"
 		app_args[module_prop_name]="${app_args[module_prop_name]}-arm"
 		app_args[arch]="arm-v7a"
-		if ((idx >= PARALLEL_JOBS)); then wait -n; else idx=$((idx + 1)); fi
+		if ((idx >= PARALLEL_JOBS)); then wait -n; fi
+		idx=$((idx + 1))
 		build_rv_w
 	else
-		if ((idx >= PARALLEL_JOBS)); then wait -n; else idx=$((idx + 1)); fi
+		idx=$((idx + 1))
 		build_rv_w
 	fi
 done
@@ -157,21 +163,13 @@ wait
 rm -rf temp/tmp.*
 if [ -z "$(ls -A1 ${BUILD_DIR})" ]; then abort "All builds failed."; fi
 
-if [ "$BUILD_MINDETACH_MODULE" = true ]; then
-	pr "Building mindetach module"
-	cp -f $PKGS_LIST mindetach-magisk/mindetach/detach.txt
-	pushd mindetach-magisk/mindetach/
-	zip -qr ../../build/mindetach-"$(grep version= module.prop | cut -d= -f2)".zip .
-	popd
-fi
-
 if youtube_t=$(toml_get_table "YouTube"); then youtube_mode=$(toml_get "$youtube_t" "build-mode") || youtube_mode="apk"; else youtube_mode="module"; fi
 if music_t=$(toml_get_table "Music"); then music_mode=$(toml_get "$music_t" "build-mode") || music_mode="apk"; else music_mode="module"; fi
 if [ "$youtube_mode" != module ] || [ "$music_mode" != module ]; then
 	log "\nInstall [Vanced Microg](https://github.com/TeamVanced/VancedMicroG/releases) for non-root YouTube or YT Music"
 fi
 log "\n[revanced-magisk-module](https://github.com/j-hc/revanced-magisk-module)"
-log "\n---\nChangelog:"
+log "\nChangelog:"
 log "$(cat $TEMP_DIR/*-rv/changelog.md)"
 
 pr "Done"
