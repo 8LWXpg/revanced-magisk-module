@@ -9,7 +9,6 @@ if [ "${1:-}" = "clean" ]; then
 fi
 
 source utils.sh
-: >build.md
 
 vtf() { if ! isoneof "${1}" "true" "false"; then abort "ERROR: '${1}' is not a valid option for '${2}': only true or false is allowed"; fi; }
 
@@ -17,11 +16,6 @@ toml_prep "$(cat 2>/dev/null "${1:-config.toml}")" || abort "could not find conf
 # -- Main config --
 main_config_t=$(toml_get_table "")
 COMPRESSION_LEVEL=$(toml_get "$main_config_t" compression-level) || COMPRESSION_LEVEL="9"
-ENABLE_MAGISK_UPDATE=$(toml_get "$main_config_t" enable-magisk-update) || ENABLE_MAGISK_UPDATE=true
-if [ "$ENABLE_MAGISK_UPDATE" = true ] && [ -z "${GITHUB_REPOSITORY:-}" ]; then
-	pr "You are building locally. Magisk updates will not be enabled."
-	ENABLE_MAGISK_UPDATE=false
-fi
 if ! PARALLEL_JOBS=$(toml_get "$main_config_t" parallel-jobs); then
 	if [ "$OS" = Android ]; then PARALLEL_JOBS=1; else PARALLEL_JOBS=$(nproc); fi
 fi
@@ -33,17 +27,27 @@ DEF_PATCHES_SRC=$(toml_get "$main_config_t" patches-source) || DEF_PATCHES_SRC="
 DEF_INTEGRATIONS_SRC=$(toml_get "$main_config_t" integrations-source) || DEF_INTEGRATIONS_SRC="ReVanced/revanced-integrations"
 DEF_CLI_SRC=$(toml_get "$main_config_t" cli-source) || DEF_CLI_SRC="j-hc/revanced-cli"
 DEF_RV_BRAND=$(toml_get "$main_config_t" rv-brand) || DEF_RV_BRAND="ReVanced"
-# -- Main config --
-mkdir -p $TEMP_DIR $BUILD_DIR
+if [ "${2:-}" = "--config-update" ]; then
+	config_update
+	exit 0
+fi
+: >build.md
+ENABLE_MAGISK_UPDATE=$(toml_get "$main_config_t" enable-magisk-update) || ENABLE_MAGISK_UPDATE=true
+if [ "$ENABLE_MAGISK_UPDATE" = true ] && [ -z "${GITHUB_REPOSITORY:-}" ]; then
+	pr "You are building locally. Magisk updates will not be enabled."
+	ENABLE_MAGISK_UPDATE=false
+fi
+# -----------------
 
+mkdir -p $TEMP_DIR $BUILD_DIR
 if ((COMPRESSION_LEVEL > 9)) || ((COMPRESSION_LEVEL < 0)); then abort "compression-level must be within 0-9"; fi
 if [ "$LOGGING_F" = true ]; then mkdir -p logs; fi
 
-#check_deps
+# -- check_deps --
 jq --version >/dev/null || abort "\`jq\` is not installed. install it with 'apt install jq' or equivalent"
 java --version >/dev/null || abort "\`openjdk 17\` is not installed. install it with 'apt install openjdk-17-jre' or equivalent"
 zip --version >/dev/null || abort "\`zip\` is not installed. install it with 'apt install zip' or equivalent"
-# --
+# ----------------
 get_prebuilts
 
 set_prebuilts() {
@@ -133,6 +137,10 @@ for table_name in $(toml_get_table_names); do
 		app_args[apkmirror_dlurl]=${app_args[apkmirror_dlurl]%/}
 		app_args[dl_from]=apkmirror
 	} || app_args[apkmirror_dlurl]=""
+	app_args[archive_dlurl]=$(toml_get "$t" archive-dlurl) && {
+		app_args[archive_dlurl]=${app_args[archive_dlurl]%/}
+		app_args[dl_from]=archive
+	} || app_args[archive_dlurl]=""
 	if [ -z "${app_args[dl_from]:-}" ]; then abort "ERROR: no 'apkmirror_dlurl', 'uptodown_dlurl' or 'apkmonk_dlurl' option was set for '$table_name'."; fi
 	app_args[arch]=$(toml_get "$t" apkmirror-arch) || app_args[arch]="universal"
 	app_args[include_stock]=$(toml_get "$t" include-stock) || app_args[include_stock]=true && vtf "${app_args[include_stock]}" "include-stock"
