@@ -19,13 +19,13 @@ apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit/"
 
 [Messenger]
 apkmirror-dlurl = "https://www.apkmirror.com/apk/facebook-2/facebook/"
-arch = "arm64-v8a"
-dpi = "360-480dpi"
+apkmirror-arch = "arm64-v8a"
+apkmirror-dpi = "360-480dpi"
 
 [Facebook]
 apkmirror-dlurl = "https://www.apkmirror.com/apk/facebook-2/facebook/"
-arch = "arm64-v8a"
-dpi = "360-480dpi"
+apkmirror-arch = "arm64-v8a"
+apkmirror-dpi = "360-480dpi"
 
 [Pixiv]
 apkmirror-dlurl = "https://www.apkmirror.com/apk/pixiv-inc/pixiv/"
