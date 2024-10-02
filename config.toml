@@ -32,10 +32,11 @@ cli-source = "inotia00/revanced-cli"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit/"
 
 [Messenger]
-uptodown-dlurl = "https://facebook-messenger.en.uptodown.com/android"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/facebook-2/messenger"
+excluded-patches = "'Disable switching emoji to sticker'"
 
 [Facebook]
-uptodown-dlurl = "https://facebook.en.uptodown.com/android"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/facebook-2/facebook"
 
 [Pixiv]
 apkmirror-dlurl = "https://www.apkmirror.com/apk/pixiv-inc/pixiv/"
