@@ -24,7 +24,7 @@ included-patches = "'MaterialYou' 'Custom branding icon YouTube' 'Custom brandin
 
 [Twitter]
 apkmirror-dlurl = "https://www.apkmirror.com/apk/twitter-inc/twitter/"
-arch = "universal"
+arch = "all"
 apkmirror-dpi = "120-640dpi"
 
 [Reddit]
