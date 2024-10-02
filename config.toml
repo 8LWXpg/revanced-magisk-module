@@ -24,6 +24,8 @@ included-patches = "'MaterialYou' 'Custom branding icon YouTube' 'Custom brandin
 
 [Twitter]
 apkmirror-dlurl = "https://www.apkmirror.com/apk/twitter-inc/twitter/"
+arch = "universal"
+apkmirror-dpi = "120-640dpi"
 
 [Reddit]
 patches-source = "inotia00/revanced-patches"
@@ -33,10 +35,12 @@ apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit/"
 
 [Messenger]
 apkmirror-dlurl = "https://www.apkmirror.com/apk/facebook-2/messenger"
+arch = "arm64-v8a"
 excluded-patches = "'Disable switching emoji to sticker'"
 
 [Facebook]
 apkmirror-dlurl = "https://www.apkmirror.com/apk/facebook-2/facebook"
+arch = "arm64-v8a"
 
 [Pixiv]
 apkmirror-dlurl = "https://www.apkmirror.com/apk/pixiv-inc/pixiv/"
