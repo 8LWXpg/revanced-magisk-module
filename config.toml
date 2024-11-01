@@ -30,11 +30,13 @@ apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit/"
 [Messenger]
 apkmirror-dlurl = "https://www.apkmirror.com/apk/facebook-2/messenger"
 arch = "arm64-v8a"
+version = "latest"
 excluded-patches = "'Disable switching emoji to sticker'"
 
 [Facebook]
 apkmirror-dlurl = "https://www.apkmirror.com/apk/facebook-2/facebook"
 arch = "arm64-v8a"
+version = "latest"
 apkmirror-dpi = "360-480dpi"
 
 [Pixiv]
