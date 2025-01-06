@@ -1,3 +1,4 @@
+Facebook: 494.0.0.55.73  
 Pixiv: 6.132.0  
 YouTube-anddea: 19.44.39  
 
