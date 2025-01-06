@@ -1,6 +1,7 @@
-Facebook: 494.0.0.55.73  
 Pixiv: 6.132.0  
+Messenger: 488.0.0.56.106  
 YouTube-anddea: 19.44.39  
+Facebook: 494.1.0.56.73  
 
 Install [Microg](https://github.com/ReVanced/GmsCore/releases) for non-root YouTube and YT Music APKs  
 Use [zygisk-detach](https://github.com/j-hc/zygisk-detach) to detach root ReVanced YouTube and YT Music from Play Store  
