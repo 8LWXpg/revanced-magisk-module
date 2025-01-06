@@ -26,7 +26,7 @@ apkmirror-dpi = "120-640dpi"
 patches-source = "anddea/revanced-patches"
 integrations-source = "anddea/revanced-integrations"
 cli-source = "inotia00/revanced-cli"
-uptodown-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit/"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit/"
 apkmirror-dpi = "120-640dpi"
 
 [Messenger]
