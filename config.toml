@@ -14,6 +14,7 @@ apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/youtube/"
 included-patches = "'MaterialYou' 'Custom branding icon YouTube' 'Custom branding name YouTube'"
 
 [Twitter]
+enabled = false
 patches-source = "crimera/piko"
 integrations-source = "crimera/revanced-integrations"
 cli-source = "inotia00/revanced-cli"
