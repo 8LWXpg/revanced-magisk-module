@@ -19,7 +19,7 @@ patches-source = "crimera/piko"
 integrations-source = "crimera/revanced-integrations"
 cli-source = "inotia00/revanced-cli"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/twitter-inc/twitter/"
-arch = "all"
+arch = "arm64-v8a"
 apkmirror-dpi = "120-640dpi"
 
 [Reddit]
@@ -27,12 +27,15 @@ patches-source = "anddea/revanced-patches"
 integrations-source = "anddea/revanced-integrations"
 cli-source = "inotia00/revanced-cli"
 uptodown-dlurl = "https://reddit-official-app.en.uptodown.com/android"
+arch = "arm64-v8a"
 
 [Messenger]
 uptodown-dlurl = "https://facebook-messenger.en.uptodown.com/android"
+arch = "arm64-v8a"
 
 [Facebook]
 uptodown-dlurl = "https://facebook.en.uptodown.com/android"
+arch = "arm64-v8a"
 
 [Pixiv]
 apkmirror-dlurl = "https://www.apkmirror.com/apk/pixiv-inc/pixiv/"
