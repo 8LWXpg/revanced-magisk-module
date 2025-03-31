@@ -46,6 +46,7 @@ excluded-patches = "'Disable switching emoji to sticker'"
 enabled = true
 uptodown-dlurl = "https://facebook.en.uptodown.com/android"
 arch = "arm64-v8a"
+version = "latest"
 
 [Pixiv]
 enabled = true
