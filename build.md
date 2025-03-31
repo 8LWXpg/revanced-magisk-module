@@ -1,4 +1,5 @@
 Messenger: 500.1.0.71.108  
+Facebook: 506.1.0.74.27  
 Pixiv: 6.138.0  
 YouTube-anddea: 19.44.39  
 Reddit: 2025.05.1  
