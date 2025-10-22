@@ -4,13 +4,18 @@ parallel-jobs = 6
 # add 'enabled = false' for not patching a specific app or remove it from the config
 # see https://github.com/j-hc/revanced-magisk-module/blob/main/CONFIG.md for more detailed explanations
 
-[YouTube-anddea]
-app-name = "YouTube"
+[YouTube]
 patches-source = "anddea/revanced-patches"
 integrations-source = "anddea/revanced-integrations"
 cli-source = "inotia00/revanced-cli"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/youtube/"
 included-patches = "'MaterialYou'"
+
+[Music]
+patches-source = "anddea/revanced-patches"
+integrations-source = "anddea/revanced-integrations"
+cli-source = "inotia00/revanced-cli"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/youtube-music"
 
 [Twitter]
 enabled = false
