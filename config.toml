@@ -56,7 +56,8 @@ arch = "arm64-v8a"
 version = "latest"
 
 [Instagram]
-apkmirror-dlurl = "https://www.apkmirror.com/apk/instagram/instagram-instagram"
+# apkmirror-dlurl = "https://www.apkmirror.com/apk/instagram/instagram-instagram/"
+uptodown-dlurl="https://instagram.en.uptodown.com/android"
 arch = "arm64-v8a"
 excluded-patches = "'Hide navigation buttons'"
 dpi = "nodpi anydpi 480dpi"
