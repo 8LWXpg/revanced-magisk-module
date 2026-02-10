@@ -1,6 +1,7 @@
 Facebook: 547.0.0.41.68  
 Messenger: 547.0.0.44.68  
 Pixiv: 6.141.1  
+Instagram: 415.0.0.36.76  
 Reddit: 2025.12.1  
 
 Install [Microg](https://github.com/ReVanced/GmsCore/releases) for non-root YouTube and YT Music APKs  
