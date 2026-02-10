@@ -12,7 +12,7 @@ apkmirror-dlurl = 'https://www.apkmirror.com/apk/google-inc/youtube'
 uptodown-dlurl = 'https://youtube.en.uptodown.com/android'
 archive-dlurl = 'https://archive.org/download/jhc-apks/apks/com.google.android.youtube'
 included-patches = "'MaterialYou'"
-dpi = 'nodpi anydpi 120-640dpi'
+# dpi = 'nodpi anydpi 120-640dpi'
 
 [Music]
 patches-source = 'anddea/revanced-patches'
@@ -31,7 +31,7 @@ cli-source = 'inotia00/revanced-cli'
 apkmirror-dlurl = 'https://www.apkmirror.com/apk/twitter-inc/twitter/'
 uptodown-dlurl = 'https://twitter.en.uptodown.com/android'
 arch = 'arm64-v8a'
-dpi = 'nodpi anydpi 120-640dpi'
+# dpi = 'nodpi anydpi 120-640dpi'
 
 [Reddit]
 patches-source = 'anddea/revanced-patches'
@@ -40,7 +40,7 @@ cli-source = 'inotia00/revanced-cli'
 # version = "2025.05.0"
 apkmirror-dlurl = 'https://www.apkmirror.com/apk/redditinc/reddit/'
 uptodown-dlurl = 'https://reddit-official-app.en.uptodown.com/android'
-dpi = 'nodpi anydpi 120-640dpi'
+# dpi = 'nodpi anydpi 120-640dpi'
 arch = 'arm64-v8a'
 
 [Messenger]
@@ -63,7 +63,7 @@ version = 'latest'
 uptodown-dlurl = 'https://instagram.en.uptodown.com/android'
 arch = 'arm64-v8a'
 excluded-patches = "'Hide navigation buttons'"
-dpi = 'nodpi anydpi 480dpi'
+# dpi = 'nodpi anydpi 480dpi'
 version = 'latest'
 
 [Pixiv]
