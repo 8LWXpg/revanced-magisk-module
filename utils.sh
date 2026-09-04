@@ -5,7 +5,7 @@ CWD=$(pwd)
 TEMP_DIR="temp"
 BIN_DIR="bin"
 BUILD_DIR="build"
-DL_SRCS=("direct" "archive" "apkmirror" "uptodown")
+DL_SRCS=("direct" "archive" "apkpure" "apkmirror" "uptodown")
 
 if [ "${GITHUB_TOKEN-}" ]; then GH_HEADER="Authorization: token ${GITHUB_TOKEN}"; else GH_HEADER=; fi
 NEXT_VER_CODE=${NEXT_VER_CODE:-$(date +'%Y%m%d')}
@@ -235,7 +235,7 @@ _req() {
 			return
 		fi
 	fi
-	if ! curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 10 --retry 1 --fail -s -S "$@" "$ip" -o "$dlp"; then
+	if ! curl -L -g -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 10 --retry 1 --fail -s -S "$@" "$ip" -o "$dlp"; then
 		epr "Request failed: $ip"
 		if [ "$dlp" != - ]; then rm -f "$dlp"; fi
 		return 1
@@ -281,14 +281,15 @@ get_patch_last_supported_ver() {
 			ver=$(sed -n "/^Name: $line\$/,/^\$/p" <<<"$op" | sed -n "/^Compatible versions:\$/,/^\$/p" | tail -n +2)
 			vers=${ver}${NL}
 		done <<<"$(list_args "$inc_sel")"
-		vers=$(awk '{$1=$1}1' <<<"$vers")
+		vers=$(sed 's/ \[versionCodes:[^]]*\]//' <<<"$vers" | awk '{$1=$1}1')
 		if [ "$vers" ]; then
 			get_highest_ver <<<"$vers"
 			return
 		fi
 	fi
 	op=$(patches_list_versions "$cli_jar" "$patches_jar" "$pkg_name" "$is_experimental") || return 1
-	op=$(sed -n '/Most common compatible versions:/,$p' <<<"$op" | sed '1d' | awk '{$1=$1}1')
+	# newer cli annotates versions with ' [versionCodes: ARM64_V8A=...]'; strip it
+	op=$(sed -n '/Most common compatible versions:/,$p' <<<"$op" | sed '1d; s/ \[versionCodes:[^]]*\]//' | awk '{$1=$1}1')
 	if [ "$op" = "Any" ]; then return; fi
 	pcount=$(head -1 <<<"$op") pcount=${pcount#*(} pcount=${pcount% *}
 	if [ -z "$pcount" ]; then
@@ -523,6 +524,64 @@ dl_uptodown() {
 	fi
 }
 get_uptodown_pkg_name() { $HTMLQ --text "tr.full:nth-child(1) > td:nth-child(3)" <<<"$__UPTODOWN_RESP_PKG__"; }
+
+# -------------------- apkpure --------------------
+# apkmirror (Cloudflare JS challenge) and uptodown (Cloudflare Turnstile on the
+# download-url ajax) can no longer be scraped with curl. apkpure still serves
+# APKs directly, so it is the primary source now.
+get_apkpure_resp() { __APKPURE_RESP__=$(req "${1}/versions" -) || return 1; }
+get_apkpure_pkg_name() { $HTMLQ --attribute data-dt-package-name "li.dt-version-item" <<<"$__APKPURE_RESP__" | head -1; }
+# ponytail: only apkpure's first versions page (~10 newest). add ?page=N paging
+# if 'auto' mode ever needs a version older than that.
+get_apkpure_vers() { $HTMLQ --attribute data-dt-version "li.dt-version-item" <<<"$__APKPURE_RESP__" | grep -iv "\(beta\|alpha\)"; }
+dl_apkpure() {
+	local url=$1 version=${2// /} output=$3 arch=$4 _dpi=$5
+	if [ -f "${output}.apkm" ]; then
+		merge_splits "${output}.apkm" "${output}"
+		return 0
+	fi
+	local want=""
+	case $arch in
+	arm64-v8a) want="arm64-v8a" ;;
+	arm-v7a) want="armeabi-v7a" ;;
+	esac
+
+	local resp dlurl=""
+	resp=$(req "${url}/download/${version}" -) || return 1
+
+	# apkpure's default download button is not always the requested arch (e.g.
+	# Reddit defaults to armeabi-v7a), so when a specific arch is wanted, pick it
+	# from the "All Variants" list: each arch <div.group-title> is followed by its
+	# download link(s). Prefer an exact arch match, else any group that includes it.
+	if [ "$want" ]; then
+		dlurl=$($HTMLQ -r svg "#version-list" <<<"$resp" 2>/dev/null |
+			grep -oE 'group-title">[^<]+|https://d\.apkpure\.net/b/[A-Z]+/[^"]+' |
+			awk -v w="$want" '
+				/^group-title">/ { a = substr($0, 14); gsub(/[ \t]/, "", a); next }
+				{ if (a == w) { print; exit }
+				  if (cand == "" && index("," a ",", "," w ",") > 0) cand = $0 }
+				END { if (cand != "") print cand }')
+	fi
+
+	if [ -z "$dlurl" ]; then
+		dlurl=$($HTMLQ --attribute href "#download_link" <<<"$resp" | head -1)
+		[ "$dlurl" ] || return 1
+		# no per-arch variant available: bail if the only build is the wrong arch
+		local stock_arch
+		stock_arch=$($HTMLQ -t 'li[data-dt-type="CpuInfo"] .value' <<<"$resp" | head -1)
+		if [ "$want" ] && [ "$stock_arch" ] && [[ $stock_arch != *"$want"* ]]; then
+			epr "apkpure has no '$want' build for '$(basename "$output")' (only: $stock_arch)"
+			return 1
+		fi
+	fi
+
+	if [[ $dlurl == */XAPK/* ]]; then
+		req "$dlurl" "${output}.apkm" || return 1
+		merge_splits "${output}.apkm" "${output}"
+	else
+		req "$dlurl" "$output" || return 1
+	fi
+}
 
 # -------------------- archive --------------------
 dl_archive() {

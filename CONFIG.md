@@ -3,8 +3,8 @@
 Adding another revanced app is as easy as this:
 ```toml
 [Some-App]
-apkmirror-dlurl = "https://www.apkmirror.com/apk/inc/app"
-# or uptodown-dlurl = "https://app.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.net/x/com.example.app"
+# or archive-dlurl / direct-dlurl (apkmirror and uptodown are blocked by Cloudflare)
 ```
 
 > [!WARNING]
@@ -55,8 +55,9 @@ included-patches = "'Some Patch'"                          # whitespace seperate
 include-stock = "merged"                                   # 'merged', 'split' or 'disable'. default: merged
 exclusive-patches = false                                  # exclude all patches by default. default: false
 
-apkmirror-dlurl = "https://www.apkmirror.com/apk/inc/app"
-uptodown-dlurl = "https://spotify.en.uptodown.com/android"
+apkpure-dlurl = "https://apkpure.net/x/com.spotify.music"   # any apkpure app url works; the slug ('x' here) is ignored
+apkmirror-dlurl = "https://www.apkmirror.com/apk/inc/app"   # blocked by Cloudflare, kept only as last-resort fallback
+uptodown-dlurl = "https://spotify.en.uptodown.com/android"  # blocked by Cloudflare Turnstile, kept only as last-resort fallback
 # direct download url. the url must have point to an apk file with name format shown in this example
 direct-dlurl = "https://website/com.google.android.youtube-20.40.45-all.apk"
 
