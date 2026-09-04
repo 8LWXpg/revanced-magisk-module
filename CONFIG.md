@@ -3,8 +3,8 @@
 Adding another revanced app is as easy as this:
 ```toml
 [Some-App]
-apkpure-dlurl = "https://apkpure.net/x/com.example.app"
-# or archive-dlurl / direct-dlurl (apkmirror and uptodown are blocked by Cloudflare)
+apk-dlurl = "https://apkpure.net/x/com.example.app"
+# optional extra fallbacks: archive-dlurl, apkmirror-dlurl (apkmirror is Cloudflare-blocked)
 ```
 
 > [!WARNING]
@@ -19,7 +19,6 @@ There exists an example below with all defaults shown and all the keys explicitl
 parallel-jobs = 1                    # amount of cores to use for parallel patching, if not set $(nproc) is used
 compression-level = 9                # module zip compression level
 remove-rv-integrations-checks = true # remove checks from the revanced integrations
-dpi = "nodpi anydpi 120-640dpi"      # dpi packages to be searched in order. default: "nodpi anydpi"
 
 patches-source = "revanced/revanced-patches" # where to fetch patches bundle from. default: "revanced/revanced-patches"
 cli-source = "ReVanced/revanced-cli"             # where to fetch cli from. default: "ReVanced/revanced-cli"
@@ -55,13 +54,10 @@ included-patches = "'Some Patch'"                          # whitespace seperate
 include-stock = "merged"                                   # 'merged', 'split' or 'disable'. default: merged
 exclusive-patches = false                                  # exclude all patches by default. default: false
 
-apkpure-dlurl = "https://apkpure.net/x/com.spotify.music"   # any apkpure app url works; the slug ('x' here) is ignored
-apkmirror-dlurl = "https://www.apkmirror.com/apk/inc/app"   # blocked by Cloudflare, kept only as last-resort fallback
-uptodown-dlurl = "https://spotify.en.uptodown.com/android"  # blocked by Cloudflare Turnstile, kept only as last-resort fallback
-# direct download url. the url must have point to an apk file with name format shown in this example
-direct-dlurl = "https://website/com.google.android.youtube-20.40.45-all.apk"
+apk-dlurl = "https://apkpure.net/x/com.spotify.music"      # any apkpure app url works; the slug ('x' here) is ignored. downloaded via apkeep, see dl-apk.sh
+archive-dlurl = "https://archive.org/download/jhc-apks/apks/com.spotify.music" # optional fallback if apk-dlurl fails
+apkmirror-dlurl = "https://www.apkmirror.com/apk/inc/app"  # optional fallback; currently Cloudflare-blocked
 
 module-prop-name = "some-app-module"                       # module prop name.
-dpi = "360-480dpi"                                         # used to select apk variant from apkmirror. default: nodpi
 arch = "arm64-v8a"                                         # 'arm64-v8a', 'arm-v7a', 'all', 'both'. 'both' downloads both arm64-v8a and arm-v7a. default: all
 ```

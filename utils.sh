@@ -5,7 +5,7 @@ CWD=$(pwd)
 TEMP_DIR="temp"
 BIN_DIR="bin"
 BUILD_DIR="build"
-DL_SRCS=("direct" "archive" "apkpure" "apkmirror" "uptodown")
+DL_SRCS=("apk")
 
 if [ "${GITHUB_TOKEN-}" ]; then GH_HEADER="Authorization: token ${GITHUB_TOKEN}"; else GH_HEADER=; fi
 NEXT_VER_CODE=${NEXT_VER_CODE:-$(date +'%Y%m%d')}
@@ -169,7 +169,6 @@ set_prebuilts() {
 	local arch
 	arch=$(uname -m)
 	if [ "$arch" = aarch64 ]; then arch=arm64; elif [ "${arch:0:5}" = "armv7" ]; then arch=arm; fi
-	HTMLQ="${BIN_DIR}/htmlq/htmlq-${arch}"
 	AAPT2="${BIN_DIR}/aapt2/aapt2-${arch}"
 	TOML="${BIN_DIR}/toml/tq-${arch}"
 }
@@ -244,7 +243,6 @@ _req() {
 		mv -f "$dlp" "$op"
 	fi
 }
-req() { _req "$1" "$2" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0"; }
 gh_req() { _req "$1" "$2" -H "$GH_HEADER"; }
 gh_dl() {
 	if [ ! -f "$1" ]; then
@@ -370,266 +368,29 @@ merge_splits() {
 	return 0
 }
 
-# -------------------- apkmirror --------------------
-apkmirror_search() {
-	local resp="$1" dpi="$2" arch="$3" apk_bundle="$4"
-	local dlurl="" node app_table emptyCheck
-
-	local apparch=('universal' 'noarch' 'arm64-v8a + armeabi-v7a')
-	if [ "$arch" != "all" ]; then
-		apparch+=("$arch")
-	fi
-
-	local appdpi=("nodpi" "anydpi")
-	if [ "$dpi" ]; then
-		appdpi+=($dpi)
-	fi
-
-	for ((n = 1; n < 40; n++)); do
-		node=$($HTMLQ "div.table-row.headerFont:nth-last-child($n)" -r "span:nth-child(n+3)" <<<"$resp")
-		if [ -z "$node" ]; then break; fi
-		emptyCheck=$($HTMLQ -t -w "div.table-cell:nth-child(1) > a:nth-child(1)" <<<"$node" | xargs)
-		if [ -z "$emptyCheck" ]; then break; fi
-		app_table=$($HTMLQ --text --ignore-whitespace <<<"$node")
-		if [ "$(sed -n 3p <<<"$app_table")" != "$apk_bundle" ]; then continue; fi
-		dlurl=$($HTMLQ --base https://www.apkmirror.com --attribute href "div:nth-child(1) > a:nth-child(1)" <<<"$node")
-		if isoneof "$(sed -n 6p <<<"$app_table")" "${appdpi[@]}" &&
-			isoneof "$(sed -n 4p <<<"$app_table")" "${apparch[@]}"; then
-			echo "$dlurl"
-			return 0
-		fi
-	done
-	if [ "$n" -eq 2 ] && [ "$dlurl" ]; then
-		# only one apk exists, return it
-		echo "$dlurl"
-		return 0
-	fi
-	return 1
+# -------------------- apk (apkeep -> apkmirror-downloader -> archive.org) --------------------
+# dlurl is the primary (apkpure-style) source url, ending in the package id
+# (e.g. https://apkpure.net/x/com.instagram.android). archive-dlurl/apkmirror-dlurl
+# are optional extra fallbacks, see dl-apk.sh.
+get_apk_resp() {
+	__APK_PKG_NAME__=$(awk -F/ '{print $NF}' <<<"$1")
+	__APK_ARCHIVE_URL__=${args[archive_dlurl]:-}
+	__APK_APKMIRROR_URL__=${args[apkmirror_dlurl]:-}
 }
-dl_apkmirror() {
-	local url=$1 version=${2// /-} output=$3 arch=$4 dpi=$5 is_bundle=false
-
-	if [ -f "${output}.apkm" ]; then
-		merge_splits "${output}.apkm" "${output}"
-		return 0
-	fi
-
-	if [ "$arch" = "arm-v7a" ]; then arch="armeabi-v7a"; fi
-	local resp node app_table apkmname dlurl=""
-	apkmname=$($HTMLQ "h1.marginZero" --text <<<"$__APKMIRROR_RESP__")
-	apkmname="${apkmname,,}" apkmname="${apkmname// /-}" apkmname="${apkmname//[^a-z0-9-]/}"
-	url="${url}/${apkmname}-${version//./-}-release/"
-	resp=$(req "$url" -) || return 1
-	node=$($HTMLQ "div.table-row.headerFont:nth-last-child(1)" -r "span:nth-child(n+3)" <<<"$resp")
-	if [ "$node" ]; then
-		for type in APK BUNDLE; do
-			if dlurl=$(apkmirror_search "$resp" "$dpi" "$arch" "$type"); then
-				if [ "$type" = "BUNDLE" ]; then
-					is_bundle=true
-				else is_bundle=false; fi
-				break 2
-			fi
-		done
-		if [ -z "$dlurl" ]; then return 1; fi
-		resp=$(req "$dlurl" -)
-	fi
-	url=$(echo "$resp" | $HTMLQ --base https://www.apkmirror.com --attribute href "a.btn") || return 1
-	url=$(req "$url" - | $HTMLQ --base https://www.apkmirror.com --attribute href "span > a[rel = nofollow]") || return 1
-
-	if [ "$is_bundle" = true ]; then
-		req "$url" "${output}.apkm" || return 1
-		merge_splits "${output}.apkm" "${output}"
-	else
-		req "$url" "${output}" || return 1
-	fi
+get_apk_pkg_name() { echo "$__APK_PKG_NAME__"; }
+get_apk_vers() {
+	apkeep -a "$__APK_PKG_NAME__" -l -d apk-pure . 2>/dev/null |
+		tail -1 | sed 's/^| *//' | tr ',' '\n' | awk '{$1=$1}1' | grep -iv "\(beta\|alpha\)"
 }
-get_apkmirror_vers() {
-	local vers apkm_resp
-	apkm_resp=$(req "https://www.apkmirror.com/uploads/?appcategory=${__APKMIRROR_CAT__}" -)
-	vers=$(sed -n 's;.*Version:</span><span class="infoSlide-value">\(.*\) </span>.*;\1;p' <<<"$apkm_resp" | awk '{$1=$1}1')
-
-	vers=$(grep -iv "\(beta\|alpha\)" <<<"$vers")
-	local v r_vers=()
-	local IFS=$'\n'
-	for v in $vers; do
-		grep -iq "${v} \(beta\|alpha\)" <<<"$apkm_resp" || r_vers+=("$v")
-	done
-	echo "${r_vers[*]}"
-}
-get_apkmirror_pkg_name() { sed -n 's;.*id=\(.*\)" class="accent_color.*;\1;p' <<<"$__APKMIRROR_RESP__"; }
-get_apkmirror_resp() {
-	__APKMIRROR_RESP__=$(req "${1}" -) || return 1
-	__APKMIRROR_CAT__="${1##*/}"
-}
-
-# -------------------- uptodown --------------------
-get_uptodown_resp() {
-	__UPTODOWN_RESP__=$(req "${1}/versions" -) || return 1
-	__UPTODOWN_RESP_PKG__=$(req "${1}/download" -) || return 1
-}
-get_uptodown_vers() { $HTMLQ --text ".version" <<<"$__UPTODOWN_RESP__"; }
-dl_uptodown() {
-	local uptodown_dlurl=$1 version=$2 output=$3 arch=$4 _dpi=$5
-	if [ "$arch" = "arm-v7a" ]; then arch="armeabi-v7a"; fi
-
-	local apparch=('arm64-v8a, armeabi-v7a, x86_64' 'arm64-v8a, armeabi-v7a, x86, x86_64' 'arm64-v8a, armeabi-v7a')
-	if [ "$arch" != "all" ]; then
-		apparch+=("$arch")
-	fi
-
-	local op resp data_code
-	data_code=$($HTMLQ "#detail-app-name" --attribute data-code <<<"$__UPTODOWN_RESP__")
-	local versionURL=""
-	local is_bundle=false
-	for i in {1..20}; do
-		resp=$(req "${uptodown_dlurl}/apps/${data_code}/versions/${i}" -)
-		if ! op=$(jq -e -r ".data | map(select(.version == \"${version}\")) | .[0]" <<<"$resp"); then
-			continue
-		fi
-		if [ "$(jq -e -r ".kindFile" <<<"$op")" = "xapk" ]; then is_bundle=true; fi
-		if versionURL=$(jq -e -r '.versionURL' <<<"$op"); then break; else return 1; fi
-	done
-	if [ -z "$versionURL" ]; then return 1; fi
-	versionURL=$(jq -e -r '.url + "/" + .extraURL + "/" + (.versionID | tostring)' <<<"$versionURL")
-	resp=$(req "$versionURL" -) || return 1
-
-	local data_version files node_arch="" data_file_id node_class
-	data_version=$($HTMLQ '.button.variants' --attribute data-version <<<"$resp") || return 1
-	if [ "$data_version" ]; then
-		files=$(req "${uptodown_dlurl%/*}/app/${data_code}/version/${data_version}/files" - | jq -e -r .content) || return 1
-		for ((n = 1; n < 12; n += 1)); do
-			node_class=$($HTMLQ -w -t ".content > :nth-child($n)" --attribute class <<<"$files") || return 1
-			if [ "$node_class" != "variant" ]; then
-				node_arch=$($HTMLQ -w -t ".content > :nth-child($n)" <<<"$files" | xargs) || return 1
-				continue
-			fi
-			if [ -z "$node_arch" ]; then return 1; fi
-			if ! isoneof "$node_arch" "${apparch[@]}"; then continue; fi
-
-			file_type=$($HTMLQ -w -t ".content > :nth-child($n) > .v-file > span" <<<"$files") || return 1
-			if [ "$file_type" = "xapk" ]; then is_bundle=true; else is_bundle=false; fi
-			data_file_id=$($HTMLQ ".content > :nth-child($n) > .v-report" --attribute data-file-id <<<"$files") || return 1
-			resp=$(req "${uptodown_dlurl}/download/${data_file_id}-x" -)
-			break
-		done
-		if [ $n -eq 12 ]; then return 1; fi
-	fi
-	local data_url
-	data_url=$($HTMLQ "#detail-download-button" --attribute data-url <<<"$resp") || return 1
-	if [ $is_bundle = true ]; then
-		req "https://dw.uptodown.com/dwn/${data_url}" "$output.apkm" || return 1
-		merge_splits "${output}.apkm" "${output}"
-	else
-		req "https://dw.uptodown.com/dwn/${data_url}" "$output"
-	fi
-}
-get_uptodown_pkg_name() { $HTMLQ --text "tr.full:nth-child(1) > td:nth-child(3)" <<<"$__UPTODOWN_RESP_PKG__"; }
-
-# -------------------- apkpure --------------------
-# apkmirror (Cloudflare JS challenge) and uptodown (Cloudflare Turnstile on the
-# download-url ajax) can no longer be scraped with curl. apkpure still serves
-# APKs directly, so it is the primary source now.
-get_apkpure_resp() { __APKPURE_RESP__=$(req "${1}/versions" -) || return 1; }
-get_apkpure_pkg_name() { $HTMLQ --attribute data-dt-package-name "li.dt-version-item" <<<"$__APKPURE_RESP__" | head -1; }
-# ponytail: only apkpure's first versions page (~10 newest). add ?page=N paging
-# if 'auto' mode ever needs a version older than that.
-get_apkpure_vers() { $HTMLQ --attribute data-dt-version "li.dt-version-item" <<<"$__APKPURE_RESP__" | grep -iv "\(beta\|alpha\)"; }
-dl_apkpure() {
-	local url=$1 version=${2// /} output=$3 arch=$4 _dpi=$5
-	if [ -f "${output}.apkm" ]; then
-		merge_splits "${output}.apkm" "${output}"
-		return 0
-	fi
-	local want=""
-	case $arch in
-	arm64-v8a) want="arm64-v8a" ;;
-	arm-v7a) want="armeabi-v7a" ;;
-	esac
-
-	local resp dlurl=""
-	resp=$(req "${url}/download/${version}" -) || return 1
-
-	# apkpure's default download button is not always the requested arch (e.g.
-	# Reddit defaults to armeabi-v7a), so when a specific arch is wanted, pick it
-	# from the "All Variants" list: each arch <div.group-title> is followed by its
-	# download link(s). Prefer an exact arch match, else any group that includes it.
-	if [ "$want" ]; then
-		dlurl=$($HTMLQ -r svg "#version-list" <<<"$resp" 2>/dev/null |
-			grep -oE 'group-title">[^<]+|https://d\.apkpure\.net/b/[A-Z]+/[^"]+' |
-			awk -v w="$want" '
-				/^group-title">/ { a = substr($0, 14); gsub(/[ \t]/, "", a); next }
-				{ if (a == w) { print; exit }
-				  if (cand == "" && index("," a ",", "," w ",") > 0) cand = $0 }
-				END { if (cand != "") print cand }')
-	fi
-
-	if [ -z "$dlurl" ]; then
-		dlurl=$($HTMLQ --attribute href "#download_link" <<<"$resp" | head -1)
-		[ "$dlurl" ] || return 1
-		# no per-arch variant available: bail if the only build is the wrong arch
-		local stock_arch
-		stock_arch=$($HTMLQ -t 'li[data-dt-type="CpuInfo"] .value' <<<"$resp" | head -1)
-		if [ "$want" ] && [ "$stock_arch" ] && [[ $stock_arch != *"$want"* ]]; then
-			epr "apkpure has no '$want' build for '$(basename "$output")' (only: $stock_arch)"
-			return 1
-		fi
-	fi
-
-	if [[ $dlurl == */XAPK/* ]]; then
-		req "$dlurl" "${output}.apkm" || return 1
-		merge_splits "${output}.apkm" "${output}"
-	else
-		req "$dlurl" "$output" || return 1
-	fi
-}
-
-# -------------------- archive --------------------
-dl_archive() {
-	local url=$1 version=$2 output=$3 arch=$4
-	local path version=${version// /}
-
+dl_apk() {
+	local _url=$1 version=${2// /} output=$3
 	if [ -f "${output}.apkm" ]; then
 		merge_splits "${output}.apkm" "$output"
 		return 0
 	fi
-
-	if ! path=$(grep -m1 "${version_f#v}-${arch// /}" <<<"$__ARCHIVE_RESP__"); then
-		path=$(grep -m1 "${version_f#v}-all" <<<"$__ARCHIVE_RESP__") || return 1
-	fi
-
-	if [ "${path##*.}" = "apkm" ]; then
-		req "${url}/${path}" "${output}.apkm" || return 1
-		merge_splits "${output}.apkm" "$output"
-	else
-		req "${url}/${path}" "${output}" || return 1
-	fi
+	bash ./dl-apk.sh "$__APK_PKG_NAME__" "$__APK_APKMIRROR_URL__" "$__APK_ARCHIVE_URL__" "$output" "$version" || return 1
+	if [ -f "${output}.apkm" ]; then merge_splits "${output}.apkm" "$output"; fi
 }
-get_archive_resp() {
-	local r
-	r=$(req "$1" -)
-	if [ -z "$r" ]; then return 1; else __ARCHIVE_RESP__=$(sed -n 's;^<a href="\(.*\)"[^"]*;\1;p' <<<"$r"); fi
-	__ARCHIVE_PKG_NAME__=$(awk -F/ '{print $NF}' <<<"$1")
-}
-get_archive_vers() { sed 's/^[^-]*-//;s/-\(all\|arm64-v8a\|arm-v7a\)\.apk//g' <<<"$__ARCHIVE_RESP__"; }
-get_archive_pkg_name() { echo "$__ARCHIVE_PKG_NAME__"; }
-
-# -------------------- direct --------------------
-dl_direct() {
-	local url=$1 version=${2// /-} output=$3 arch=$4 _dpi=$5
-	if ! grep -q "${version_f#v}-${arch// /}" <<<"$url"; then
-		epr "Given direct-dlurl for $output is not compatible. Set proper 'arch' and 'version' options."
-		return 1
-	fi
-	if [ "${url##*.}" = "apkm" ]; then
-		req "$url" "${output}.apkm" || return 1
-		merge_splits "${output}.apkm" "$output"
-	else
-		req "$url" "${output}" || return 1
-	fi
-}
-get_direct_vers() { cut -d- -f2 <<<"$__DIRECT_APKNAME__"; }
-get_direct_pkg_name() { cut -d- -f1 <<<"$__DIRECT_APKNAME__"; }
-get_direct_resp() { __DIRECT_APKNAME__=$(awk -F/ '{print $NF}' <<<"$1"); }
 # --------------------------------------------------
 
 patch_apk() {
@@ -751,8 +512,8 @@ build_rv() {
 					continue
 				fi
 			fi
-			if ! dl_${dl_p} "${args[${dl_p}_dlurl]}" "$version" "$stock_apk" "$arch" "${args[dpi]}" "$get_latest_ver"; then
-				epr "ERROR: Could not download '${table}' from '${dl_p}' with version '${version}', arch '${arch}', dpi '${args[dpi]}'"
+			if ! dl_${dl_p} "${args[${dl_p}_dlurl]}" "$version" "$stock_apk" "$arch" "$get_latest_ver"; then
+				epr "ERROR: Could not download '${table}' from '${dl_p}' with version '${version}', arch '${arch}'"
 				continue
 			fi
 			break

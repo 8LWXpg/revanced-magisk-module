@@ -107,24 +107,20 @@ for table_name in $(toml_get_table_names); do
 		fi
 	} || app_args[include_stock]=merged
 
-	for dl_from in "${DL_SRCS[@]}"; do
-		if app_args[${dl_from}_dlurl]=$(toml_get "$t" "${dl_from}-dlurl"); then
-			app_args[${dl_from}_dlurl]=${app_args[${dl_from}_dlurl]%/}
-			app_args[${dl_from}_dlurl]=${app_args[${dl_from}_dlurl]%download}
-			app_args[${dl_from}_dlurl]=${app_args[${dl_from}_dlurl]%/}
-			app_args[dl_from]=${dl_from}
-		else
-			app_args[${dl_from}_dlurl]=""
-		fi
-	done
-	if [ -z "${app_args[dl_from]-}" ]; then abort "ERROR: no 'dlurl' option was set for '$table_name'. (${DL_SRCS[*]})"; fi
+	if app_args[apk_dlurl]=$(toml_get "$t" "apk-dlurl"); then
+		app_args[apk_dlurl]=${app_args[apk_dlurl]%/}
+		app_args[dl_from]=apk
+	else
+		abort "ERROR: no 'apk-dlurl' option was set for '$table_name'."
+	fi
+	app_args[archive_dlurl]=$(toml_get "$t" "archive-dlurl") || app_args[archive_dlurl]=""
+	app_args[apkmirror_dlurl]=$(toml_get "$t" "apkmirror-dlurl") || app_args[apkmirror_dlurl]=""
 	app_args[arch]=$(toml_get "$t" arch) || app_args[arch]="all"
 	if ! isoneof "${app_args[arch]}" "both" "all" "arm64-v8a" "arm-v7a" "x86_64" "x86"; then
 		abort "wrong arch '${app_args[arch]}' for '$table_name'"
 	fi
 
 	app_args[pkg_name]=$(toml_get "$t" pkg-name) || app_args[pkg_name]=""
-	app_args[dpi]=$(toml_get "$t" dpi) || app_args[dpi]=""
 	table_name_f=${table_name,,}
 	table_name_f=${table_name_f// /-}
 	app_args[module_prop_name]=$(toml_get "$t" module-prop-name) || app_args[module_prop_name]="${table_name_f}-jhc"
