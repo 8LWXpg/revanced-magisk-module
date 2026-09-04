@@ -1,18 +1,21 @@
-Facebook: 547.0.0.41.68  
-Messenger: 547.0.0.44.68  
-Pixiv: 6.141.1  
-Instagram: 415.0.0.36.76  
-Reddit: 2025.12.1  
+Music: 9.15.51  
+YouTube: 20.51.39  
+Reddit: 2026.14.0  
 
-Install [Microg](https://github.com/ReVanced/GmsCore/releases) for non-root YouTube and YT Music APKs  
-Use [zygisk-detach](https://github.com/j-hc/zygisk-detach) to detach root ReVanced YouTube and YT Music from Play Store  
+Install [Microg](https://github.com/MorpheApp/MicroG-RE/) for non-root YouTube and YT Music APKs  
+Use [zygisk-detach](https://github.com/j-hc/zygisk-detach) to detach YouTube and YT Music modules from Play Store  
 
 [revanced-magisk-module](https://github.com/j-hc/revanced-magisk-module)
   
-CLI: inotia00/revanced-cli-5.0.2-all.jar  
-Patches: anddea/patches-3.16.0.rvp  
-[Changelog](https://github.com/anddea/revanced-patches/releases/tag/v3.16.0)
+Patches: anddea/patches-4.2.0.mpp  
+[Changelog](https://github.com/anddea/revanced-patches/releases/tag/v4.2.0)
 
-CLI: j-hc/revanced-cli-5.0.0-all.jar  
-Patches: ReVanced/patches-5.48.0.rvp  
-[Changelog](https://github.com/ReVanced/revanced-patches/releases/tag/v5.48.0)  
+Patches: andrewliang25/patches-1.8.0.mpp  
+[Changelog](https://github.com/andrewliang25/morphe-patches/releases/tag/v1.8.0)
+
+Patches: crimera/patches-3.9.0.mpp  
+[Changelog](https://github.com/crimera/piko/releases/tag/v3.9.0)
+
+CLI: MorpheApp/morphe-desktop-1.15.0-all.jar  
+Patches: MorpheApp/patches-1.41.0.mpp  
+[Changelog](https://github.com/MorpheApp/morphe-patches/releases/tag/v1.41.0)  
