@@ -63,7 +63,7 @@ java() {
 }
 
 get_prebuilts() {
-	local cli_src=$1 cli_ver=$2 patches_src=$3 patches_ver=$4
+	local cli_src=MorpheApp/morphe-cli cli_ver=$1 patches_src=$2 patches_ver=$3
 	pr "Getting prebuilts (${patches_src%/*})" >&2
 	local cl_dir=${patches_src%/*}
 	cl_dir=${TEMP_DIR}/${cl_dir,,}-rv

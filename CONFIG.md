@@ -9,8 +9,7 @@ There exists an example below with all defaults shown and all the keys explicitl
 parallel-jobs = 1 # amount of cores to use for parallel patching, if not set $(nproc) is used
 
 patches-source = "MorpheApp/morphe-patches"  # where to fetch patches bundle from. default: "MorpheApp/morphe-patches"
-cli-source = "MorpheApp/morphe-cli"          # where to fetch cli from. default: "MorpheApp/morphe-cli"
-# options like cli-source can also set per app
+# options like patches-source can also set per app
 
 patches-version = "v2.160.0" # 'latest', 'dev', or a version number. default: "latest"
 cli-version = "v5.0.0"       # 'latest', 'dev', or a version number. default: "latest"
