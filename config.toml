@@ -1,84 +1,82 @@
-enable-module-update = true  # set this to false if you do not want to receive updates for the module
 parallel-jobs = 8
 
 # add 'enabled = false' for not patching a specific app or remove it from the config
 # see https://github.com/j-hc/revanced-magisk-module/blob/main/CONFIG.md for more detailed explanations
 #
-# apk-dlurl (apkpure) is the primary download source, via dl-apk.sh (apkeep).
-# archive-dlurl and apkmirror-dlurl are optional extra fallbacks tried in that order
-# when apkeep fails; apkmirror is currently Cloudflare-blocked so its dlurl is kept
-# commented out until that's fixed upstream.
+# apkpure-dlurl (apkpure) supplies the package id; downloads are tried via dl-apk.sh in this
+# order: archive-dlurl, then apkmirror-dlurl (via apkmirror-downloader), then apk-pure
+# (apkeep) as the last resort, since apk-pure can't reliably serve a specific pinned version.
 
 [YouTube]
 patches-source = "anddea/revanced-patches"
 cli-source = "MorpheApp/morphe-cli"
-apk-dlurl = "https://apkpure.net/x/com.google.android.youtube"
-# apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/youtube"
+apkpure-dlurl = "https://apkpure.net/x/com.google.android.youtube"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/youtube"
 archive-dlurl = "https://archive.org/download/jhc-apks/apks/com.google.android.youtube"
 arch = "arm64-v8a"
 
 [Music]
 patches-source = "anddea/revanced-patches"
 cli-source = "MorpheApp/morphe-cli"
-apk-dlurl = "https://apkpure.net/x/com.google.android.apps.youtube.music"
-# apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/youtube-music"
+apkpure-dlurl = "https://apkpure.net/x/com.google.android.apps.youtube.music"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/youtube-music"
 archive-dlurl = "https://archive.org/download/jhc-apks/apks/com.google.android.apps.youtube.music"
 arch = "arm64-v8a"
 
 [GooglePhotos]
 enabled = false
-build-mode = "both"
 patches-source = "RookieEnough/De-Vanced"
 cli-source = "MorpheApp/morphe-cli"
-apk-dlurl = "https://apkpure.net/x/com.google.android.apps.photos"
-# apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/photos/"
+apkpure-dlurl = "https://apkpure.net/x/com.google.android.apps.photos"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/photos/"
 archive-dlurl = "https://archive.org/download/jhc-apks/apks/com.google.android.apps.photos"
 
 [Reddit]
 patches-source = "MorpheApp/morphe-patches"
 cli-source = "MorpheApp/morphe-cli"
-apk-dlurl = "https://apkpure.net/x/com.reddit.frontpage"
-# apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit/"
+apkpure-dlurl = "https://apkpure.net/x/com.reddit.frontpage"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/redditinc/reddit/"
 archive-dlurl = "https://archive.org/download/jhc-apks/apks/com.reddit.frontpage"
 arch = "arm64-v8a"
 
 [Messenger]
 enabled = false
-apk-dlurl = "https://apkpure.net/x/com.facebook.orca"
+apkpure-dlurl = "https://apkpure.net/x/com.facebook.orca"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/facebook-2/messenger/"
 arch = "arm64-v8a"
 excluded-patches = "'Disable switching emoji to sticker'"
 
 [Facebook]
 enabled = false
-apk-dlurl = "https://apkpure.net/x/com.facebook.katana"
-# apkmirror-dlurl = "https://www.apkmirror.com/apk/facebook-2/facebook"
+apkpure-dlurl = "https://apkpure.net/x/com.facebook.katana"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/facebook-2/facebook"
 arch = "arm64-v8a"
 
 [Twitter]
 patches-source = "crimera/piko"
 cli-source = "MorpheApp/morphe-cli"
-apk-dlurl = "https://apkpure.net/x/com.twitter.android"
-# apkmirror-dlurl = "https://www.apkmirror.com/apk/twitter-inc/twitter/"
+apkpure-dlurl = "https://apkpure.net/x/com.twitter.android"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/twitter-inc/twitter/"
 archive-dlurl = "https://archive.org/download/jhc-apks/apks/com.twitter.android"
 arch = "arm64-v8a"
 
 [Instagram]
 patches-source = "crimera/piko"
 cli-source = "MorpheApp/morphe-cli"
-apk-dlurl = "https://apkpure.net/x/com.instagram.android"
-# apkmirror-dlurl = "https://www.apkmirror.com/apk/instagram/instagram-instagram/"
+apkpure-dlurl = "https://apkpure.net/x/com.instagram.android"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/instagram/instagram-instagram/"
 arch = "arm64-v8a"
 
 [Pixiv]
 enabled = false
-apk-dlurl = "https://apkpure.net/x/jp.pxv.android"
-# apkmirror-dlurl = "https://www.apkmirror.com/apk/pixiv-inc/pixiv/"
+apkpure-dlurl = "https://apkpure.net/x/jp.pxv.android"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/pixiv-inc/pixiv/"
 arch = "arm64-v8a"
 
 [Line]
 patches-source = "andrewliang25/morphe-patches"
 cli-source = "MorpheApp/morphe-cli"
-apk-dlurl = "https://apkpure.net/x/jp.naver.line.android"
-# apkmirror-dlurl = "https://www.apkmirror.com/apk/line-corporation/line/"
+apkpure-dlurl = "https://apkpure.net/x/jp.naver.line.android"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/line-corporation/line/"
+archive-dlurl = "https://archive.org/download/8LWXpg/apks/jp.naver.line.android"
 arch = "arm64-v8a"

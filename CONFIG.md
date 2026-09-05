@@ -3,8 +3,8 @@
 Adding another revanced app is as easy as this:
 ```toml
 [Some-App]
-apk-dlurl = "https://apkpure.net/x/com.example.app"
-# optional extra fallbacks: archive-dlurl, apkmirror-dlurl (apkmirror is Cloudflare-blocked)
+apkpure-dlurl = "https://apkpure.net/x/com.example.app"
+# optional extra fallbacks, tried in this order: archive-dlurl, apkmirror-dlurl
 ```
 
 > [!WARNING]
@@ -17,7 +17,6 @@ There exists an example below with all defaults shown and all the keys explicitl
 
 ```toml
 parallel-jobs = 1                    # amount of cores to use for parallel patching, if not set $(nproc) is used
-compression-level = 9                # module zip compression level
 remove-rv-integrations-checks = true # remove checks from the revanced integrations
 
 patches-source = "revanced/revanced-patches" # where to fetch patches bundle from. default: "revanced/revanced-patches"
@@ -31,7 +30,6 @@ cli-version = "v5.0.0"       # 'latest', 'dev', or a version number. default: "l
 [Some-App]
 app-name = "SomeApp" # if set, release name becomes SomeApp instead of Some-App. default is same as table name, which is 'Some-App' here.
 enabled = true       # whether to build the app. default: true
-build-mode = "apk"   # 'both', 'apk' or 'module'. default: apk
 
 # 'auto' option gets the latest possible version supported by all the included patches
 # 'latest' gets the latest stable without checking patches support. 'beta' gets the latest beta/alpha
@@ -51,13 +49,11 @@ excluded-patches = """\
   """
 
 included-patches = "'Some Patch'"                          # whitespace seperated list of non-default patches to include. default: ""
-include-stock = "merged"                                   # 'merged', 'split' or 'disable'. default: merged
 exclusive-patches = false                                  # exclude all patches by default. default: false
 
-apk-dlurl = "https://apkpure.net/x/com.spotify.music"      # any apkpure app url works; the slug ('x' here) is ignored. downloaded via apkeep, see dl-apk.sh
-archive-dlurl = "https://archive.org/download/jhc-apks/apks/com.spotify.music" # optional fallback if apk-dlurl fails
-apkmirror-dlurl = "https://www.apkmirror.com/apk/inc/app"  # optional fallback; currently Cloudflare-blocked
+apkpure-dlurl = "https://apkpure.net/x/com.spotify.music"      # any apkpure app url works; the slug ('x' here) is ignored. supplies the package id and is the last-resort download source (via apkeep), see dl-apk.sh
+archive-dlurl = "https://archive.org/download/jhc-apks/apks/com.spotify.music" # optional, tried first
+apkmirror-dlurl = "https://www.apkmirror.com/apk/inc/app"  # optional, tried second (via apkmirror-downloader)
 
-module-prop-name = "some-app-module"                       # module prop name.
 arch = "arm64-v8a"                                         # 'arm64-v8a', 'arm-v7a', 'all', 'both'. 'both' downloads both arm64-v8a and arm-v7a. default: all
 ```

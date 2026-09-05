@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Download an APK: try apkeep, then apkmirror-downloader, then archive.org.
+# Download an APK: try archive.org, then apkmirror-downloader, then apkeep (apk-pure) last resort.
 # Usage: ./dl-apk.sh <package-id> <apkmirror-url> <archive-url> <output> [version]
 #   package-id:    e.g. com.instagram.android
-#   apkmirror-url: https://www.apkmirror.com/apk/<org>/<repo>  (empty string to skip this fallback)
+#   apkmirror-url: https://www.apkmirror.com/apk/<org>/<repo>  (empty string to skip this source)
 #   archive-url:   e.g. https://archive.org/download/jhc-apks/apks/com.instagram.android (empty to skip)
 #   output:        exact file path to write the apk to; a split bundle is written to "<output>.apkm" instead
+# apk-pure (via apkeep) cannot reliably serve a specific historical version - it may 404 or
+# silently return a different build - so it is tried last, as a best-effort fallback only.
 set -euo pipefail
 
 pr() { echo -e "\033[0;32m[+] ${1}\033[0m"; }
@@ -28,22 +30,32 @@ place() {
 	esac
 }
 
-if apkeep -a "${pkg}${version:+@$version}" -d apk-pure "$scratch"; then
-	f=$(find "$scratch" -maxdepth 1 -type f | head -1)
-	if [ -n "$f" ]; then
-		place "$f"
-		pr "Downloaded '$pkg' via apkeep"
+if [ -n "$archive_url" ]; then
+	# pick the file matching $version, or the newest listed entry if no version was requested;
+	# if a version WAS requested and isn't listed, file stays empty rather than silently
+	# substituting the wrong version. A missing/404 archive listing also falls through below.
+	listing=$(curl -fsSL "$archive_url" | sed -n 's;^<a href="\([^"]*\)"[^>]*>.*;\1;p') || listing=""
+	if [ -n "$version" ]; then
+		file=$(grep -m1 -- "-${version}-" <<<"$listing") || file=""
+	else
+		file=$(tail -n1 <<<"$listing") || file=""
+	fi
+	if [ -n "$file" ] && curl -fsSL -o "$scratch/$file" "${archive_url%/}/$file"; then
+		place "$scratch/$file"
+		pr "Downloaded '$pkg' via archive.org ($file)"
 		exit 0
 	fi
+	epr "Could not download '$pkg' from archive.org, falling back to apkmirror-downloader"
+else
+	epr "No archive-url given for '$pkg', skipping archive.org"
 fi
-epr "Could not download '$pkg' via apkeep, falling back to apkmirror-downloader"
 
 if [ -n "$apkmirror_url" ]; then
 	# org/repo are the last two path segments of https://www.apkmirror.com/apk/<org>/<repo>
 	IFS='/' read -r -a parts <<<"${apkmirror_url%/}"
 	org=${parts[-2]}
 	repo=${parts[-1]}
-	if apkmd --org "$org" --repo "$repo" ${version:+--version "$version"} --outDir "$scratch"; then
+	if apkmd download "$org" "$repo" ${version:+--version "$version"} --outdir "$scratch"; then
 		f=$(find "$scratch" -maxdepth 1 -type f | head -1)
 		if [ -n "$f" ]; then
 			place "$f"
@@ -51,24 +63,18 @@ if [ -n "$apkmirror_url" ]; then
 			exit 0
 		fi
 	fi
-	epr "Could not download '$pkg' via apkmirror-downloader, falling back to archive.org"
+	epr "Could not download '$pkg' via apkmirror-downloader, falling back to apk-pure (apkeep)"
 else
 	epr "No apkmirror-url given for '$pkg', skipping apkmirror-downloader"
 fi
 
-if [ -z "$archive_url" ]; then
-	epr "No archive-url given for '$pkg'"
-	exit 1
+if apkeep -a "${pkg}${version:+@$version}" -d apk-pure "$scratch"; then
+	f=$(find "$scratch" -maxdepth 1 -type f | head -1)
+	if [ -n "$f" ]; then
+		place "$f"
+		pr "Downloaded '$pkg' via apk-pure (apkeep)"
+		exit 0
+	fi
 fi
-
-# pick the file matching $version (or the newest listed entry if no version given)
-listing=$(curl -fsSL "$archive_url" | sed -n 's;^<a href="\([^"]*\)"[^>]*>.*;\1;p')
-file=$([ -n "$version" ] && grep -m1 -- "-${version}-" <<<"$listing" || tail -n1 <<<"$listing")
-if [ -z "$file" ]; then
-	epr "Could not find '$pkg' in archive.org"
-	exit 1
-fi
-
-curl -fsSL -o "$scratch/$file" "${archive_url%/}/$file"
-place "$scratch/$file"
-pr "Downloaded '$pkg' via archive.org ($file)"
+epr "Could not download '$pkg' from any source"
+exit 1
