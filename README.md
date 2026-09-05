@@ -1,8 +1,8 @@
 # ReVanced Magisk Module
 
-Self use Morphe builder  
+Self use Morphe builder
 
 ## Notice
 
-- Based on [j-hc/revanced-magisk-module](https://github.com/j-hc/revanced-magisk-module)
+- Forked from [j-hc/revanced-magisk-module](https://github.com/j-hc/revanced-magisk-module) commit `65f40c96bc1b`, licensed under GPL3
 
