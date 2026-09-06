@@ -36,10 +36,15 @@ if [ -n "$archive_url" ]; then
 	# substituting the wrong version. A missing/404 archive listing also falls through below.
 	listing=$(curl -fsSL "$archive_url" | sed -n 's;^<a href="\([^"]*\)"[^>]*>.*;\1;p') || listing=""
 	if [ -n "$version" ]; then
-		file=$(grep -m1 -- "-${version}-" <<<"$listing") || file=""
+		candidates=$(grep -- "-${version}-" <<<"$listing") || candidates=""
 	else
-		file=$(tail -n1 <<<"$listing") || file=""
+		# newest version = last listed; keep every arch variant of it for the arch pick below
+		newest=$(tail -n1 <<<"$listing" | sed -n 's;.*-\([0-9][0-9.]*\)-.*;\1;p') || newest=""
+		candidates=$([ -n "$newest" ] && grep -- "-${newest}-" <<<"$listing" || tail -n1 <<<"$listing") || candidates=""
 	fi
+	# archive.org only carries "-arm64-v8a.<ext>" or "-all.<ext>" builds; take those, skip "-arm-v7a." etc.
+	file=$(grep -m1 -- '-arm64-v8a\.' <<<"$candidates") ||
+		file=$(grep -m1 -- '-all\.' <<<"$candidates") || file=""
 	if [ -n "$file" ] && curl -fsSL -o "$scratch/$file" "${archive_url%/}/$file"; then
 		place "$scratch/$file"
 		pr "Downloaded '$pkg' via archive.org ($file)"
